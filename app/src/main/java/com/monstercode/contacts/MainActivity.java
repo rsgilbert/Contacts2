@@ -10,6 +10,8 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -50,6 +52,11 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerview_contacts);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        // adding divider
+        DividerItemDecoration itemDecorator =  new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        itemDecorator.setDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.divider));
+        recyclerView.addItemDecoration(itemDecorator);
+        
         getContacts();
 
         if(isNetworkAvailable()) {
@@ -163,13 +170,6 @@ public class MainActivity extends AppCompatActivity {
                 ContactDao contactDao = appDatabase.contactDao();
                 int updated = contactDao.updateAll(contacts);
                 Log.d(TAG, "doInBackground: updated " + updated);
-//                for (Contact contact: contacts) {
-//                    int updatedContactsCount = contactDao.updateOne(contact);
-//                    if(updatedContactsCount == 0) {
-//                        contactDao.insertOne(contact);
-//                    }
-//                }
-
                 return null;
             }
 
@@ -187,3 +187,10 @@ public class MainActivity extends AppCompatActivity {
     }
 }
 
+
+//                for (Contact contact: contacts) {
+//                    int updatedContactsCount = contactDao.updateOne(contact);
+//                    if(updatedContactsCount == 0) {
+//                        contactDao.insertOne(contact);
+//                    }
+//                }

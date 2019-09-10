@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,8 +34,8 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.Contac
     @Override
     public void onBindViewHolder(@NonNull ContactsViewHolder holder, int position) {
         Contact contact = contactsList.get(position);
-        holder.textViewFirstName.setText(contact.getFirstname());
-        holder.textViewLastName.setText(contact.getLastname());
+        holder.textViewName.setText(contact.getFirstname() + " " + contact.getLastname());
+        holder.textViewDesignation.setText(contact.getDesignation());
     }
 
     @Override
@@ -44,13 +45,13 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.Contac
 
 
     class ContactsViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        TextView textViewFirstName, textViewLastName;
+        TextView textViewName, textViewDesignation;
 
         public ContactsViewHolder(View itemView) {
             super(itemView);
 
-            textViewFirstName = itemView.findViewById(R.id.textViewFirstName);
-            textViewLastName = itemView.findViewById(R.id.textViewLastName);
+            textViewName = itemView.findViewById(R.id.textViewName);
+            textViewDesignation = itemView.findViewById(R.id.textViewDesignation);
 
             itemView.setOnClickListener(this);
 
