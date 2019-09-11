@@ -17,17 +17,20 @@ public class Contact implements Serializable {
     @ColumnInfo(name="lastname")
     private String lastname;
 
-    @ColumnInfo(name="tel")
-    private String tel;
+    @ColumnInfo(name="tel1")
+    private String tel1;
+
+    @ColumnInfo(name="tel2")
+    private String tel2;
 
     @ColumnInfo(name="email")
     private String email;
 
-    @ColumnInfo(name = "designation")
-    private String designation;
+    @ColumnInfo(name="siteId")
+    private int siteId;
 
-    @ColumnInfo(name="site")
-    private int site;
+    @ColumnInfo(name="job")
+    private String job;
 
     /**
      * Getters and setters
@@ -57,14 +60,6 @@ public class Contact implements Serializable {
         this.lastname = lastname;
     }
 
-    public String getTel() {
-        return tel;
-    }
-
-    public void setTel(String tel) {
-        this.tel = tel;
-    }
-
     public String getEmail() {
         return email;
     }
@@ -73,20 +68,36 @@ public class Contact implements Serializable {
         this.email = email;
     }
 
-    public String getDesignation() {
-        return designation;
+    public String getTel1() {
+        return tel1;
     }
 
-    public void setDesignation(String designation) {
-        this.designation = designation;
+    public void setTel1(String tel1) {
+        this.tel1 = tel1;
     }
 
-    public int getSite() {
-        return site;
+    public String getTel2() {
+        return tel2;
     }
 
-    public void setSite(int site) {
-        this.site = site;
+    public void setTel2(String tel2) {
+        this.tel2 = tel2;
+
     }
 
+    public int getSiteId() {
+        return siteId;
+    }
+
+    public void setSiteId(int siteId) {
+        this.siteId = siteId;
+    }
+
+    public String getJob() {
+        return job;
+    }
+
+    public void setJob(String job) {
+        this.job = job;
+    }
 }

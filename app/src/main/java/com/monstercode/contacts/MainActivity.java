@@ -1,31 +1,26 @@
 package com.monstercode.contacts;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
+
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
+import android.widget.ListView;
 import android.widget.Toast;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
+import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -36,12 +31,13 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 
+
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private static final String TAG = "MainActivity";
     private final String API_BASE_URL = "https://contactsapi01.herokuapp.com";
-    private ContactsAdapter contactsAdapter;
+    private DetailsAdapter detailsAdapter;
     private SearchView searchView;
 
     @Override
@@ -56,12 +52,13 @@ public class MainActivity extends AppCompatActivity {
         DividerItemDecoration itemDecorator =  new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
         itemDecorator.setDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.divider));
         recyclerView.addItemDecoration(itemDecorator);
-        
-        getContacts();
+
+        getDetails();
 
         if(isNetworkAvailable()) {
-            downloadContacts();
+            downloadDetails();
         }
+
 
     }
     @Override
@@ -73,13 +70,13 @@ public class MainActivity extends AppCompatActivity {
        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
            @Override
            public boolean onQueryTextSubmit(String query) {
-               contactsAdapter.searchFor(query);
+               detailsAdapter.searchFor(query);
                return true;
            }
 
            @Override
            public boolean onQueryTextChange(String newText) {
-               contactsAdapter.searchFor(newText);
+               detailsAdapter.searchFor(newText);
                return true;
            }
        });
@@ -106,50 +103,92 @@ public class MainActivity extends AppCompatActivity {
         return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
 
-    // load contacts into ContactsAdapter
-    private void getContacts() {
+    // load contacts into DetailsAdapter
+    private void getDetails() {
         Log.d(TAG, "getNames: Getting names");
-        class GetContacts extends AsyncTask<Void, Void, List<Contact>> {
+        class GetDetails extends AsyncTask<Void, Void, List<Detail>> {
             @Override
-            protected List<Contact> doInBackground(Void... voids) {
+            protected List<Detail> doInBackground(Void... voids) {
                 AppDatabase appDatabase = DatabaseClient
                         .getInstance(getApplicationContext())
                         .getAppDatabase();
                 ContactDao contactDao = appDatabase.contactDao();
+                SiteDao siteDao = appDatabase.siteDao();
                 List<Contact> contactList = contactDao.getAll();
-                Log.d(TAG, "doInBackground: Finished getting contacts from database");
-                return contactList;
+                List<Site> siteList = siteDao.getAll();
+                return makeDetails(siteList, contactList);
             }
             @Override
-            protected void onPostExecute(List<Contact> contacts) {
-                super.onPostExecute(contacts);
-                contactsAdapter = new ContactsAdapter(MainActivity.this, contacts);
-                recyclerView.setAdapter(contactsAdapter);
-                Log.d(TAG, "onPostExecute: Finished setting up contacts adapter");
+            protected void onPostExecute(List<Detail> details) {
+                super.onPostExecute(details);
+                detailsAdapter = new DetailsAdapter(MainActivity.this, details);
+                recyclerView.setAdapter(detailsAdapter);
             }
         }
-        GetContacts getContacts = new GetContacts();
-        getContacts.execute();
+        GetDetails getDetails = new GetDetails();
+        getDetails.execute();
+    }
+
+    private List<Detail> makeDetails(List<Site> siteList, List<Contact> contactList) {
+        List<Detail> detailList = new ArrayList<>();
+
+        for(Contact contact: contactList) {
+            Detail detail = new Detail();
+            for(Site site: siteList) {
+                if (site.getId()  == contact.getSiteId()) {
+                    detail.setSiteId(site.getId());
+                    detail.setSitename(site.getSitename());
+                    detail.setCategory(site.getCategory());
+                }
+            }
+            detail.setJob(contact.getJob());
+            detail.setId(contact.getId());
+            detail.setEmail(contact.getEmail());
+            detail.setName(contact.getFirstname() + " " + contact.getLastname());
+            detail.setTel1(contact.getTel1());
+            detail.setTel2(contact.getTel2());
+
+            detailList.add(detail);
+
+        }
+        return detailList;
     }
 
     // connect to ContactsAPI online, download contacts and put them into db
-    private void downloadContacts() {
+    private void downloadDetails() {
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         Retrofit.Builder builder = new Retrofit.Builder()
                         .baseUrl(API_BASE_URL)
                         .addConverterFactory(GsonConverterFactory.create());
         Retrofit retrofit = builder.client(httpClient.build()).build();
-        ContactService contactService = retrofit.create(ContactService.class);
+        final DetailService detailService = retrofit.create(DetailService.class);
 
         // Http call to get all contacts
-        Call<List<Contact>> call = contactService.getContacts();
+        Call<List<Contact>> contactsCall = detailService.getContacts();
 
-        call.enqueue(new Callback<List<Contact>>() {
+
+        contactsCall.enqueue(new Callback<List<Contact>>() {
             @Override
             public void onResponse(Call<List<Contact>> call, Response<List<Contact>> response) {
-                Toast.makeText(MainActivity.this, "Connected: Downloaded contacts", Toast.LENGTH_SHORT).show();
-                List<Contact> contactsToUpdate = response.body();
-                saveContacts(contactsToUpdate);
+                final List<Contact> contactsToUpdate = new ArrayList<>();
+                contactsToUpdate.addAll(response.body());
+
+                Call<List<Site>> sitesCall = detailService.getSites();
+                sitesCall.enqueue(new Callback<List<Site>>() {
+                    @Override
+                    public void onResponse(Call<List<Site>> call, Response<List<Site>> response) {
+                        Toast.makeText(MainActivity.this, "Connected: Downloaded sites", Toast.LENGTH_SHORT).show();
+                        final List<Site> sitesToUpdate = new ArrayList<>();
+                        sitesToUpdate.addAll(response.body());
+                        saveDetails(sitesToUpdate, contactsToUpdate);
+                    }
+
+                    @Override
+                    public void onFailure(Call<List<Site>> call, Throwable t) {
+
+                    }
+                });
+
             }
 
             @Override
@@ -158,39 +197,34 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "onFailure: " + t.getMessage());
             }
         });
+
+
     }
 
-    private void saveContacts(final List<Contact> contacts) {
+    private void saveDetails(final List<Site> sitesToUpdate, final List<Contact> contactsToUpdate) {
         // performing db operation in main thread will crash our app
         class SaveTask extends AsyncTask<Void, Void, Void> {
             @Override
             protected Void doInBackground(Void... voids) {
                 // add to db
                 AppDatabase appDatabase = DatabaseClient.getInstance(getApplicationContext()).getAppDatabase();
-                ContactDao contactDao = appDatabase.contactDao();
-                int updated = contactDao.updateAll(contacts);
-                Log.d(TAG, "doInBackground: updated " + updated);
+                appDatabase.siteDao().insertAll(sitesToUpdate);
+                appDatabase.contactDao().insertAll(contactsToUpdate);
                 return null;
             }
 
             @Override
             protected void onPostExecute(Void aVoid) {
                 super.onPostExecute(aVoid);
-                Toast.makeText(getApplicationContext(), "Saved contacts", Toast.LENGTH_SHORT).show();
                 Log.d("PostExecute", "Saved contact");
-                getContacts();
+                getDetails();
             }
         }
 
         SaveTask saveTask = new SaveTask();
         saveTask.execute();
     }
+
+
+
 }
-
-
-//                for (Contact contact: contacts) {
-//                    int updatedContactsCount = contactDao.updateOne(contact);
-//                    if(updatedContactsCount == 0) {
-//                        contactDao.insertOne(contact);
-//                    }
-//                }

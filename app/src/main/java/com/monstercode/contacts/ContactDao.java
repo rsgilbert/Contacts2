@@ -14,20 +14,11 @@ public interface ContactDao {
     @Query("SELECT * FROM contacts")
     List<Contact> getAll();
 
-
-    // this query was not necessary in the long run
-    @Query("SELECT * FROM contacts WHERE " +
-            "firstname LIKE '%' || :searchWord || '%' OR " +
-            "lastname LIKE '%' || :searchWord || '%' OR " +
-            "tel LIKE '%' || :searchWord || '%' OR " +
-            "designation LIKE '%' || :searchWord || '%'")
-    List<Contact> query(String searchWord);
-
     @Update(onConflict = OnConflictStrategy.REPLACE)
     int updateAll(List<Contact> contacts);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    long[] insertAll(Contact... contacts);
+    long[] insertAll(List<Contact> contacts);
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     int updateOne(Contact contact);

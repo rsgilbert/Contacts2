@@ -8,7 +8,7 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 
-public interface ContactService {
+public interface DetailService {
     @GET("/contacts/")
     public Call<List<Contact>> getContacts ();
 
@@ -16,5 +16,7 @@ public interface ContactService {
     public Call<Contact> getContact(
             @Path("contactId") int contactId
     );
+    @GET("/sites")
+    public Call<List<Site>> getSites();
 }
 
